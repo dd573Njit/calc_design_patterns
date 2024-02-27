@@ -1,11 +1,12 @@
 import pytest
 from app import App
+from command_config import dict
 
 def test_app_start_exit_command(capfd, monkeypatch):
     """Test that the REPL exits correctly on 'exit' command."""
     # Simulate user entering 'exit'
     monkeypatch.setattr('builtins.input', lambda _: 'exit')
-    app = App()
+    app = App(dict)
     with pytest.raises(SystemExit) as e:
         app.start()
     assert e.type == SystemExit
@@ -16,7 +17,7 @@ def test_app_start_unknown_command(capfd, monkeypatch):
     inputs = iter(['unknown_command', 'exit'])
     monkeypatch.setattr('builtins.input', lambda _: next(inputs))
 
-    app = App()
+    app = App(dict)
     
     with pytest.raises(SystemExit) as excinfo:
         app.start()
