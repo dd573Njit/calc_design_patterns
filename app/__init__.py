@@ -47,21 +47,34 @@ class App:
     def load_plugins(self):
         # Dynamically load all plugins in the plugins directory
         plugins_package = 'app.plugins'
-        for _, plugin_name, is_pkg in pkgutil.iter_modules([plugins_package.replace('.', '/')]):
+        plugins_path = plugins_package.replace('.', '/')
+        if not os.path.exists(plugins_path):
+            logging.warning(f"Plugins directory '{plugins_path}' not found.")
+            return
+        for _, plugin_name, is_pkg in pkgutil.iter_modules([plugins_path]):
             if is_pkg:  # Ensure it's a package
                 plugin_module = importlib.import_module(f'{plugins_package}.{plugin_name}')
-                for item_name in dir(plugin_module):
+                try:
+                    plugin_module = importlib.import_module(f'{plugins_package}.{plugin_name}')
+                    self.register_plugin_commands(plugin_module, plugin_name)
+                except ImportError as e:
+                    logging.error(f"Error importing plugin {plugin_name}: {e}")
+                    
+    def register_plugin_commands(self, plugin_module, plugin_name):
+        for item_name in dir(plugin_module):
                     item = getattr(plugin_module, item_name)
                     try:
                         if issubclass(item, (Command)):  # Assuming a BaseCommand class exists
                             self.dict[plugin_name] = item()
                             self.command_handler.register_command(plugin_name, item())
+                            logging.info(f"Command '{plugin_name}' from plugin '{plugin_name}' registered.")
                     except TypeError:
                         continue  # If item is not a class or unrelated class, just ignore
+        
     def start(self):
         self.load_plugins()
         self.show_menu()
-        print("Type 'exit' to exit.")
+        logging.info("Application started. Type 'exit' to exit.")
         while True:
             input_line = input(">>> ").strip()
             if input_line == "":
@@ -78,5 +91,6 @@ class App:
             try:
                 self.command_handler.execute_command(command_name, *args)
             except KeyError:
-                print(f"No such command: {command_name}")
+                logging.error(f"Unknown command: {command_name}")
+                sys.exit(1)  # Use a non-zero exit code to indicate failure or incorrect command.
 
