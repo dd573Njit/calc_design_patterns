@@ -39,10 +39,10 @@ class App:
             self.command_handler.register_command(cmd_name, cmd_instance)
             
     def show_menu(self):
-        print("Available commands:")
+        logging.info("Available commands:")
         # List all registered commands
         for command_name in self.command_handler.commands.keys():
-            print(f"- {command_name}")
+            logging.info(f"- {command_name}")
 
     def load_plugins(self):
         # Dynamically load all plugins in the plugins directory
